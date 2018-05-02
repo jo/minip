@@ -1,0 +1,16 @@
+{
+  "name": "minip",
+  "version": "1.0.0",
+  "description": "minip is a very basics you needed to replicate with a CouchDB.",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap --reporter=spec test/*.js",
+    "test:perf": "tap --reporter=spec test/perf/*.js"
+  },
+  "keywords": [],
+  "author": "Johannes J. Schmidt",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "tap": "^11.1.4"
+  }
+}
