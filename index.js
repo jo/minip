@@ -14,8 +14,7 @@ const intoStore = new_edits => {
 
     store[doc._id].revMap = store[doc._id].revMap || {}
     
-    const lastWinningRev = calculateWinningRev(store[doc._id].revMap)
-    const rev = new_edits === false ? doc._rev : generateRev(lastWinningRev, doc)
+    const rev = new_edits === false ? doc._rev : generateRev(store[doc._id].winningRev, doc)
 
     store[doc._id].revMap[rev] = doc
     
