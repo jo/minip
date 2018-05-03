@@ -1,8 +1,8 @@
 const { test } = require('tap')
 
-const MiniP = require('..')
+const P = require('..')
 
-const db = new MiniP()
+const db = new P()
 
 test('returns a promise', t => db.allDocs())
 

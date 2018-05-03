@@ -29,6 +29,7 @@ const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('
 const generateRev = (lastWinningRev, doc) => (lastWinningRev ? parseInt(lastWinningRev, 10) + 1 : 1) + '-' + md5(JSON.stringify(doc))
 
 const calculateWinningRev = (revMap = {}) => {
+  // FIXME: this fails if rev number > 9
   const sortedRevs = Object.keys(revMap).sort()
   
   return sortedRevs[sortedRevs.length - 1]
