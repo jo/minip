@@ -12,5 +12,8 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "tap": "^11.1.4"
+  },
+  "dependencies": {
+    "npm": "^6.0.0"
   }
 }

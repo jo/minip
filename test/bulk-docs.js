@@ -1,8 +1,8 @@
 const { test } = require('tap')
 
-const Minipouch = require('..')
+const MiniP = require('..')
 
-const db = new Minipouch()
+const db = new MiniP()
 
 test('returns a promise', t => db.bulkDocs())
 
@@ -19,9 +19,9 @@ test('single document insert', g => {
         t.end()
       })
 
-      g.test('mutates _docsById', t => {
-        t.type(db._docsById.foo, 'object', 'object `foo`')
-        t.type(db._docsById.foo.revMap, 'object', 'object `foo.revMap`')
+      g.test('mutates _store', t => {
+        t.type(db._store.foo, 'object', 'object `foo`')
+        t.type(db._store.foo.revMap, 'object', 'object `foo.revMap`')
         t.end()
       })
 

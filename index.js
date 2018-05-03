@@ -34,21 +34,21 @@ const calculateWinningRev = (revMap = {}) => {
   return sortedRevs[sortedRevs.length - 1]
 }
 
-module.exports = class Minipouch {
+module.exports = class MiniP {
   constructor () {
-    this._docsById = {}
+    this._store = {}
   }
   
   bulkDocs (docs = [], options = {}) {
-    this._docsById = docs.reduce(intoStore(options.new_edits), this._docsById)
+    this._store = docs.reduce(intoStore(options.new_edits), this._store)
 
-    const response = docs.map(doc => ({ ok: true, id: doc._id, rev: this._docsById[doc._id].winningRev }))
+    const response = docs.map(doc => ({ ok: true, id: doc._id, rev: this._store[doc._id].winningRev }))
 
     return Promise.resolve(response)
   }
 
   allDocs () {
-    const response = Object.values(this._docsById).map(fromStore)
+    const response = Object.values(this._store).map(fromStore)
 
     return Promise.resolve(response)
   }

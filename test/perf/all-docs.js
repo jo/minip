@@ -1,6 +1,6 @@
 const { test } = require('tap')
 
-const Minipouch = require('../..')
+const MiniP = require('../..')
 
 let uuid = 0
 const generateDocs = (BATCH_SIZE, generateRevs) => {
@@ -15,7 +15,7 @@ const generateDocs = (BATCH_SIZE, generateRevs) => {
   return docs
 }
 
-const db = new Minipouch()
+const db = new MiniP()
 
 for (let BATCH_SIZE = 10; BATCH_SIZE < 100001; BATCH_SIZE=BATCH_SIZE*10) {
   test(`allDocs batch #${BATCH_SIZE}`, t => {

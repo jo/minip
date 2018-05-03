@@ -1,8 +1,8 @@
 const { test } = require('tap')
 
-const Minipouch = require('..')
+const MiniP = require('..')
 
-const db = new Minipouch()
+const db = new MiniP()
 
 test('returns a promise', t => db.allDocs())
 
