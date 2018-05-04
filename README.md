@@ -15,6 +15,8 @@ Lets write a datastore from scratch, which can sync with Apache CouchDB and
 does not break further replication. And nothing more. Everything is allowed as
 long as it does not mess with the database in incompatible ways.
 
+**Let's make it out of NodeJS and pour it in Rust.**
+
 This very first attempts on this does not do optimistic locking. It will just
 increment the revision number and calculate a new deterministic revision hash
 based on the content.
@@ -42,10 +44,11 @@ The development process is pretty straight forward:
 * Fix Mini P
 
 ## What Works
-* Store a bunch of docs.
-* Store docs with `new_edits:false`.
+* Store and retrieve a bunch of docs
+* Store docs with `new_edits: false`.
+* Get docs with `revs: true`
 * Update a doc, increment `_rev`
-* choose winning rev merely based on rev number and alphabetical order
+* choose winning rev
 
 
 ## What does not work
