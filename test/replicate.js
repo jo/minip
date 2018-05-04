@@ -21,7 +21,7 @@ test('ensure clean remote state', t => {
 })
 
 
-test('seed database', t => db.bulkDocs([{ _id:'one' }, { _id:'two' }, { _id:'three' }]))
+test('seed database', t => db.bulkDocs([{ _id: 'foo' }]))
 
 test('push', t => {
   return push(db, url) 
@@ -33,7 +33,8 @@ test('push', t => {
           json: true
         })
         .then(({ rows }) => {
-          t.equal(rows.length, 3, 'has three elements')
+          t.equal(rows.length, 1, 'has one element')
+          t.equal(rows[0].id, 'foo', 'has correct element')
         })
     })
 })
@@ -45,7 +46,42 @@ test('pull', t => {
 
       return db.allDocs()
         .then(response => {
-          t.equal(response.length, 3, 'response has three elements')
+          t.equal(response.length, 1, 'response has one element')
+          t.equal(response[0]._id, 'foo', 'response has correct element')
+        })
+    })
+})
+
+test('edit item and push again', t => {
+  return db.bulkDocs([{ _id: 'bar', n: 1 }])
+    .then(([{ rev }]) => {
+      const rev1 = rev
+
+      return db.bulkDocs([{ _id: 'bar', n: 2 }])
+        .then(([{ rev }]) => {
+          const rev2 = rev
+
+          return push(db, url) 
+            .then(response => {
+              t.type(response, 'object', 'is an object')
+              
+              return request.get({
+                  url: `${url}/bar`,
+                  json: true,
+                  qs: {
+                    revs: true,
+                    conflicts: true
+                  }
+                })
+                .then(doc => {
+                  t.equal(doc._id, 'bar', 'has correct id')
+                  t.same(doc._revisions, {
+                    start: 2,
+                    ids: [rev1.replace(/^\d+-/, '')]
+                  }, 'has correct revisions tree')
+                  t.notOk(doc._conflicts, 'has no conflicts')
+                })
+            })
         })
     })
 })

@@ -24,11 +24,13 @@ alphabetical order of revisions.
 
 The api is nothing but the methods needed for replication:
 
-* `allDocs()`
+* `allDocs(options)`
 * `bulkDocs(docs, options)`
 
 For `bulkDocs` you can pass `{ new_edits: false }` to circumvent new revision
 assignment.
+
+For `allDocs` you pass `{ revs: true }` and get the rev tree.
 
 Mini P will not save you from anything. There is exactly zero error handling.
 And there is zero beautification. But what comes - who knows?
@@ -43,7 +45,7 @@ The development process is pretty straight forward:
 * Store a bunch of docs.
 * Store docs with `new_edits:false`.
 * Update a doc, increment `_rev`
-* choose winning rev merely based on alphabetical order
+* choose winning rev merely based on rev number and alphabetical order
 
 
 ## What does not work

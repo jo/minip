@@ -1,7 +1,7 @@
 const request = require('request-promise-native')
 
 exports.push = (db, url) => {
-  return db.allDocs()
+  return db.allDocs({ revs: true })
     .then(docs => {
       return request.post({
           url: `${url}/_bulk_docs`,

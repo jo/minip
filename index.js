@@ -1,13 +1,22 @@
 const crypto = require('crypto')
+const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('hex')
 
-const fromStore = doc => {
-  return {
-    ...doc.revMap[doc.winningRev],
-    _rev: doc.winningRev
+const fromStore = ({ revs }) => {
+  return doc => {
+    const d = {
+      ...doc.revMap[doc.winningRev],
+      _rev: doc.winningRev
+    }
+
+    if (revs && Object.keys(doc.revMap).length > 1) {
+      d._revisions = getRevisions(doc)
+    }
+
+    return d
   }
 }
 
-const intoStore = new_edits => {
+const intoStore = ({ new_edits }) => {
   return (store, doc) => {
     store[doc._id] = store[doc._id] || {}
     store[doc._id]._id = doc._id
@@ -24,15 +33,38 @@ const intoStore = new_edits => {
   }
 }
 
-const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('hex')
+const getRevisions = doc => {
+  return Object.keys(doc.revMap)
+    .sort(byRevision)
+    .reduce((memo, rev) => {
+      if (rev !== doc.winningRev) {
+        memo.ids.push(rev.replace(/^\d+-/, ''))
+      }
+
+      return memo
+    }, {
+      start: parseInt(doc.winningRev, 10),
+      ids: []
+    })
+}
 
 const generateRev = (lastWinningRev, doc) => (lastWinningRev ? parseInt(lastWinningRev, 10) + 1 : 1) + '-' + md5(JSON.stringify(doc))
 
 const calculateWinningRev = (revMap = {}) => {
-  // FIXME: this fails if rev number > 9
-  const sortedRevs = Object.keys(revMap).sort()
+  const sortedRevs = Object.keys(revMap).sort(byRevision)
   
   return sortedRevs[sortedRevs.length - 1]
+}
+
+const byRevision = (a,b) => {
+  const na = parseInt(a, 10)
+  const nb = parseInt(b, 10)
+  
+  if (na === nb) {
+    return a.replace(/^\d+-/,'') > b.replace(/^\d+-/,'')
+  }
+  
+  return na > nb
 }
 
 module.exports = class MiniP {
@@ -41,15 +73,15 @@ module.exports = class MiniP {
   }
   
   bulkDocs (docs = [], options = {}) {
-    this._store = docs.reduce(intoStore(options.new_edits), this._store)
+    this._store = docs.reduce(intoStore(options), this._store)
 
     const response = docs.map(doc => ({ ok: true, id: doc._id, rev: this._store[doc._id].winningRev }))
 
     return Promise.resolve(response)
   }
 
-  allDocs () {
-    const response = Object.values(this._store).map(fromStore)
+  allDocs (options = {}) {
+    const response = Object.values(this._store).map(fromStore(options))
 
     return Promise.resolve(response)
   }
