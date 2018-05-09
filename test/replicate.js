@@ -15,10 +15,7 @@ const Pairs = [
 ]
 
 const clean = (source, target) => {
-  return Promise.all([source.destroy(), target.destroy()])
-    .then(() => Promise.all([source.create(), target.create()]))
-    .catch(() => Promise.all([source.create(), target.create()]))
-    .catch(() => true)
+  return Promise.all([source.reset(), target.reset()])
 }
 
 Pairs.forEach(([Source, Target]) => {

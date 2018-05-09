@@ -5,16 +5,10 @@ module.exports = class HttpP {
     this.url = url
   }
 
-  destroy () {
-    return request.delete({
-      url: `${this.url}`
-    })
-  }
-  
-  create () {
-    return request.put({
-      url: `${this.url}`
-    })
+  reset () {
+    return request.delete(`${this.url}`)
+      .then(() => request.put(`${this.url}`))
+      .catch(() => true)
   }
   
   bulkDocs (docs = [], options = {}) {

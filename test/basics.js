@@ -7,18 +7,11 @@ const Ps = [
   require('../http-p')
 ]
 
-const clean = db => {
-  return db.destroy()
-    .then(() => db.create())
-    .catch(() => db.create())
-    .catch(() => true)
-}
-
 Ps.forEach(P => {
   test(P.name, g => {
     const db = new P(url)
   
-    g.beforeEach(() => clean(db))
+    g.beforeEach(() => db.reset())
 
     g.test('allDocs returns a promise', t => db.allDocs())
     g.test('bulkDocs returns a promise', t => db.bulkDocs())

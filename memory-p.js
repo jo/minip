@@ -75,11 +75,7 @@ module.exports = class MemoryP {
     this._store = {}
   }
 
-  create () {
-    return Promise.resolve()
-  }
-
-  destroy () {
+  reset () {
     this._store = {}
     return Promise.resolve()
   }

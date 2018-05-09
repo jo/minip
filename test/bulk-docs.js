@@ -10,16 +10,11 @@ const Ps = [
   HttpP
 ]
 
-const clean = db => {
-  return db.destroy()
-    .then(() => db.create())
-}
-
 Ps.forEach(P => {
   test(P.name, g => {
     const db = new P(url)
   
-    g.beforeEach(() => clean(db))
+    g.beforeEach(() => db.reset())
 
     g.test('bulkDocs returns a promise', t => db.bulkDocs())
 

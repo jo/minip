@@ -15,5 +15,6 @@ test('mutates store', t => {
 
       t.type(db._store.foo, 'object', 'object `foo`')
       t.type(db._store.foo.revMap, 'object', 'object `foo.revMap`')
+      t.type(db._store.foo.winningRev, 'string', 'string winningRev')
     })
 })
