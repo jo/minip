@@ -59,6 +59,31 @@ Ps.forEach(P => {
       return db.bulkDocs([{ _id: 'foo', n: 1, _rev: '1-abc' }, { _id: 'foo', n: 2, _rev: '1-def' }, { _id: 'foo', n: 3, _rev: '1-ghi' }], { new_edits: false })
         .then(() => db.allDocs({ conflicts: true }))
         .then(response => {
+          // if (db._store) console.log(JSON.stringify(db._store))
+          // {
+          //   "foo": {
+          //     "_id": "foo",
+          //     "revMap": {
+          //       "1-abc": {
+          //         "_id": "foo",
+          //         "n": 1,
+          //         "_rev": "1-abc"
+          //       },
+          //       "1-def": {
+          //         "_id": "foo",
+          //         "n": 2,
+          //         "_rev": "1-def"
+          //       },
+          //       "1-ghi": {
+          //         "_id": "foo",
+          //         "n": 3,
+          //         "_rev": "1-ghi"
+          //       }
+          //     },
+          //     "winningRev": "1-ghi"
+          //   }
+          // }
+
           return response.shift()
         })
         .then(doc => {
@@ -82,6 +107,19 @@ Ps.forEach(P => {
         })
         .then(element => {
           // console.log(JSON.stringify(element))
+          // {
+          //   "id": "foo",
+          //   "docs": [
+          //     {
+          //       "ok": {
+          //         "_id": "foo",
+          //         "_rev": "1-c86e975fffb4a635eed6d1dfc92afded",
+          //         "bar": "baz"
+          //       }
+          //     }
+          //   ]
+          // }
+
           t.equal(element.id, 'foo', 'id is correct')
           
           t.ok(Array.isArray(element.docs), 'is an array')
