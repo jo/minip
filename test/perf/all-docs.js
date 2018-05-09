@@ -1,6 +1,6 @@
 const { test } = require('tap')
 
-const MiniP = require('../..')
+const P = require('../../memory-p')
 
 let uuid = 0
 const generateDocs = (BATCH_SIZE, generateRevs) => {
@@ -15,9 +15,9 @@ const generateDocs = (BATCH_SIZE, generateRevs) => {
   return docs
 }
 
-const db = new MiniP()
+const db = new P()
 
-for (let BATCH_SIZE = 10; BATCH_SIZE < 100001; BATCH_SIZE=BATCH_SIZE*10) {
+for (let BATCH_SIZE = 1000; BATCH_SIZE < 100001; BATCH_SIZE=BATCH_SIZE*10) {
   test(`allDocs batch #${BATCH_SIZE}`, t => {
     docs = generateDocs(BATCH_SIZE)
 

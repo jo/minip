@@ -1,28 +1,15 @@
-const request = require('request-promise-native')
-
-exports.push = (db, url) => {
-  return db.allDocs({ revs: true })
+module.exports = (source, target) => {
+  return source.allDocs()
     .then(docs => {
-      return request.post({
-          url: `${url}/_bulk_docs`,
-          json: true,
-          body: {
-            docs: docs,
-            new_edits: false
-          }
-        })
-    })
-}
+      const ids = docs.map(doc => ({ id: doc._id }))
 
-exports.pull = (db, url) => {
-  return request.get({
-      url: `${url}/_changes`,
-      json: true,
-      qs: { include_docs: true }
+      return source.bulkGet(ids, { revs: true })
     })
-    .then(body => {
-      const docs = body.results.map(change => change.doc)
+    .then(response => {
+      const docs = response.reduce((memo, r) => {
+        return memo.concat(r.docs.map(d => d.ok))
+      }, [])
 
-      return db.bulkDocs(docs, { new_edits: false })
+      return target.bulkDocs(docs, { new_edits: false })
     })
 }

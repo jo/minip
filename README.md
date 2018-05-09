@@ -28,11 +28,12 @@ The api is nothing but the methods needed for replication:
 
 * `allDocs(options)`
 * `bulkDocs(docs, options)`
+* `bulkGet(docs, options)`
 
 For `bulkDocs` you can pass `{ new_edits: false }` to circumvent new revision
 assignment.
 
-For `allDocs` you pass `{ revs: true }` and get the rev tree.
+For `bulkGet` you pass `{ revs: true }` and get the rev tree.
 
 Mini P will not save you from anything. There is exactly zero error handling.
 And there is zero beautification. But what comes - who knows?

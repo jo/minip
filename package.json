@@ -4,7 +4,7 @@
   "description": "minip is a very basics you needed to replicate with a CouchDB.",
   "main": "index.js",
   "scripts": {
-    "test": "tap --reporter=spec test/*.js",
+    "test": "tap --reporter=spec test/*.js test/memory-p/*.js",
     "test:perf": "tap --reporter=spec test/perf/*.js"
   },
   "keywords": [],
