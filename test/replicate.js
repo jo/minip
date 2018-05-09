@@ -8,13 +8,17 @@ const HttpP = require('../http-p')
 const url = process.env.COUCH || 'http://localhost:5984/minip-test'
 
 const Pairs = [
+  [MemoryP, MemoryP],
   [MemoryP, HttpP],
-  [HttpP, MemoryP]
+  [HttpP, MemoryP],
+  [HttpP, HttpP]
 ]
 
 const clean = (source, target) => {
   return Promise.all([source.destroy(), target.destroy()])
     .then(() => Promise.all([source.create(), target.create()]))
+    .catch(() => Promise.all([source.create(), target.create()]))
+    .catch(() => true)
 }
 
 Pairs.forEach(([Source, Target]) => {

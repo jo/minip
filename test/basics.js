@@ -10,6 +10,8 @@ const Ps = [
 const clean = db => {
   return db.destroy()
     .then(() => db.create())
+    .catch(() => db.create())
+    .catch(() => true)
 }
 
 Ps.forEach(P => {
