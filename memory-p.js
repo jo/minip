@@ -1,19 +1,14 @@
 const crypto = require('crypto')
 const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('hex')
 
-const allDocsFromStore = doc => {
-  return {
+const fromStore = (doc, { revs, conflicts }) => {
+  const d = {
     ...doc.revMap[doc.winningRev],
     _rev: doc.winningRev
   }
-}
-
-const bulkGetFromStore = doc => {
-  const d = allDocsFromStore(doc)
-
-  if (Object.keys(doc.revMap).length) {
-    d._revisions = getRevisions(doc)
-  }
+  
+  if (revs) d._revisions = getRevisions(doc)
+  if (conflicts) d._conflicts = getConflicts(doc)
 
   return d
 }
@@ -46,6 +41,14 @@ const getRevisions = doc => {
       start: parseInt(doc.winningRev, 10),
       ids: []
     })
+}
+
+const getConflicts = doc => {
+  const revpos = parseInt(doc.winningRev, 10)
+
+  return Object.keys(doc.revMap)
+    .filter(rev => parseInt(rev, 10) === revpos && rev !== doc.winningRev)
+    .sort(byRevision)
 }
 
 const generateRev = (lastWinningRev, doc) => (lastWinningRev ? parseInt(lastWinningRev, 10) + 1 : 1) + '-' + md5(JSON.stringify(doc))
@@ -91,15 +94,15 @@ module.exports = class MemoryP {
 
   allDocs (options = {}) {
     const response = Object.values(this._store)
-      .map(allDocsFromStore)
+      .map(doc => fromStore(doc, options))
 
     return Promise.resolve(response)
   }
-  
+
   bulkGet (docs = [], options = {}) {
     const response = docs
       .map(doc => this._store[doc.id])
-      .map(bulkGetFromStore)
+      .map(doc => fromStore(doc, options))
       .map(doc => {
         return {
           id: doc._id,

@@ -46,7 +46,7 @@ Ps.forEach(P => {
         })
     })
 
-    g.test('allDocs includes conflict', { skip: true }, t => {
+    g.test('allDocs includes conflict', t => {
       return db.bulkDocs([{ _id: 'foo', n: 1, _rev: '1-abc' }, { _id: 'foo', n: 2, _rev: '1-def' }], { new_edits: false })
         .then(() => db.allDocs({ conflicts: true }))
         .then(response => {
@@ -62,7 +62,7 @@ Ps.forEach(P => {
         })
     })
 
-    g.test('allDocs with two conflicts', { skip: true }, t => {
+    g.test('allDocs with two conflicts', t => {
       return db.bulkDocs([{ _id: 'foo', n: 1, _rev: '1-abc' }, { _id: 'foo', n: 2, _rev: '1-def' }, { _id: 'foo', n: 3, _rev: '1-ghi' }], { new_edits: false })
         .then(() => db.allDocs({ conflicts: true }))
         .then(response => {
