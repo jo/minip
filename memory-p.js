@@ -48,7 +48,7 @@ const fromStore = (store, _id, { revs, conflicts }) => {
 
   // if `options.conflicts` and there are conflicts, get conflicts from branches
   // lookup full revisions (including revision position)
-  const _conflicts = conflicts && store.ids[_id].branches ? store.ids[_id].branches.map(rev => store.revs[rev].body._rev) : null
+  const _conflicts = conflicts && store.ids[_id].branches && store.ids[_id].branches.length ? store.ids[_id].branches.map(rev => store.revs[rev].body._rev).reverse() : null
 
   // if `options.revs`, return a revisions object including start and revision tree
   const _revisions = revs ? { start: parseInt(body._rev, 10), ids: getRevTree(store, rev) } : null
