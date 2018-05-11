@@ -31,6 +31,24 @@ You get a `replicate(source, target)` API, which replicates an entire database.
 
 Mini P requires Node v8.
 
+## Example
+```js
+const { HttpP, MemoryP, replicate } from 'minip'
+
+var local = new MemoryP()
+var remote = new HttpP('http://localhost:5094/mydb')
+
+local.bulkDocs([{ _id: 'foo', bar: 'baz' }])
+  .then(() => replicate(local, remote))
+  .then(() => remote.allDocs())
+  .then(([doc]) => console.log(doc))
+  // {
+  //   _id: 'foo',
+  //   _rev: '1-b3cec23b98d5f20d20a8279878ddce3d',
+  //   bar: 'baz'
+  // }
+```
+
 ## State of Mini P
 ### What Works
 * Store and retrieve a bunch of docs

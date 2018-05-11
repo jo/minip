@@ -3,7 +3,7 @@ const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('
 
 // Memory P
 //
-// This is an example this._store object:
+// This is an example `this._store` object:
 //
 // {
 //   ids: {
