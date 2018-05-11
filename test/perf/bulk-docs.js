@@ -1,6 +1,11 @@
 const { test } = require('tap')
 
-const P = require('../../memory-p')
+const url = process.env.COUCH || 'http://localhost:5984/minip-test'
+
+const Ps = [
+  require('../../memory-p'),
+  require('../../http-p')
+]
 
 let uuid = 0
 const generateDocs = (BATCH_SIZE, generateRevs) => {
@@ -15,21 +20,34 @@ const generateDocs = (BATCH_SIZE, generateRevs) => {
   return docs
 }
 
-const db = new P()
+Ps.forEach(P => {
+  test(P.name, g => {
+    const db = new P(url)
 
-for (let BATCH_SIZE = 1000; BATCH_SIZE < 10001; BATCH_SIZE=BATCH_SIZE*10) {
-  test(`bulkDocs insert in batches á ${BATCH_SIZE}:`, g => {
-    let docs
-    for (let b = 0; b < 3; b++) {
-      docs = generateDocs(BATCH_SIZE)
-      g.test(`bulkDocs batch #${b}`, t => {
-        return db.bulkDocs(docs)
-      })
-      g.test(`bulkDocs batch new_edits false #${b}`, t => {
-        return db.bulkDocs(docs, { new_edits: false })
+    g.beforeEach(() => db.reset())
+
+    for (let BATCH_SIZE = 1000; BATCH_SIZE < 100001; BATCH_SIZE=BATCH_SIZE*10) {
+      g.test(`bulkDocs insert in batches á ${BATCH_SIZE}:`, s => {
+        s.test('bulkDocs', t => {
+          const docs = generateDocs(BATCH_SIZE)
+          const start = new Date()
+          
+          return db.bulkDocs(docs)
+            .then(() => t.pass(`${new Date() - start}ms`))
+        })
+        s.test('bulkDocs new_edits false', t => {
+          const docs = generateDocs(BATCH_SIZE, true)
+          const start = new Date()
+          
+          return db.bulkDocs(docs, { new_edits: false })
+            .then(() => t.pass(`${new Date() - start}ms`))
+        })
+
+        s.end()
       })
     }
 
     g.end()
   })
-}
+})
+
