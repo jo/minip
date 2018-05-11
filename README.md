@@ -1,7 +1,7 @@
 # Mini P
-Mini P (german abbr for Mini Pizza) is a very basics you needed to replicate
+Mini P (german abbr for Mini Pizza) is the very basics you needed to replicate
 with a CouchDB. Its not something you would consider using in production in any
-way. Mini P is a playground, a learning project created mostly for myself.
+way. Mini P is a playground, a learning project.
 
 Mini P provides two adapters by now:
 
@@ -17,26 +17,21 @@ The api is nothing but the methods needed for replication:
 API is a subset of CouchDB's API which is the absolute essential for
 replication. It's aligned to CouchDB API as near as possible.
 
-For `bulkDocs` you can pass `{ new_edits: false }` to circumvent new revision
-assignment.
+* For `bulkDocs` you can pass `{ new_edits: false }` to circumvent new revision assignment.
+* For `bulkGet` you pass `{ revs: true }` and get the rev tree.
+* For `allDocs` and `bulkGet` you pass `{ conflicts: true }` and get the conflicts.
 
-For `bulkGet` you pass `{ revs: true }` and get the rev tree.
+And you get a `replicate(source, target)` API, which replicates an entire database.
 
-For `allDocs` and `bulkGet` you pass `{ conflicts: true }` and get the conflicts.
-
-Mini P will not save you from anything. There is exactly zero error handling.
-And there is zero beautification. But what comes - who knows?
-
-You get a `replicate(source, target)` API, which replicates an entire database.
-
+## Dependencies
 Mini P requires Node v8.
 
 ## Example
 ```js
-const { HttpP, MemoryP, replicate } from 'minip'
+import { HttpP, MemoryP, replicate } from 'minip'
 
-var local = new MemoryP()
-var remote = new HttpP('http://localhost:5094/mydb')
+const local = new MemoryP()
+const remote = new HttpP('http://localhost:5984/mydb')
 
 local.bulkDocs([{ _id: 'foo', bar: 'baz' }])
   .then(() => replicate(local, remote))
