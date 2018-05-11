@@ -21,7 +21,7 @@ The API is nothing but the methods needed for replication:
 API is a subset of CouchDB's API which is the absolute essential for
 replication. It's aligned to CouchDB API as near as possible.
 
-* For `bulkDocs` you can pass `{ new_edits: false }` to circumvent new revision assignment.
+* For `bulkDocs` you can pass `{ new_edits: false }` to circumvent optimistic locking
 * For `bulkGet` you pass `{ revs: true }` and get the rev tree.
 * For `allDocs` and `bulkGet` you pass `{ conflicts: true }` and get the conflicts.
 
