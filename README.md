@@ -3,12 +3,16 @@ Mini P (german abbr for Mini Pizza) is the very basics you needed to replicate
 with a CouchDB. Its not something you would consider using in production in any
 way. Mini P is a playground, a learning project.
 
+## Adapters
 Mini P provides two adapters by now:
 
 * MemoryP - in memory store
 * HttpP - talks to a real CouchDB
 
-The api is nothing but the methods needed for replication:
+both share the same interface.
+
+## API
+The API is nothing but the methods needed for replication:
 
 * `allDocs(options)`
 * `bulkDocs(docs, options)`
@@ -21,7 +25,21 @@ replication. It's aligned to CouchDB API as near as possible.
 * For `bulkGet` you pass `{ revs: true }` and get the rev tree.
 * For `allDocs` and `bulkGet` you pass `{ conflicts: true }` and get the conflicts.
 
+## Replication
 And you get a `replicate(source, target)` API, which replicates an entire database.
+
+The CouchDB replication protocol replicates documents via the changes feed.
+
+When you've got a huge database on the server and a client connects for the
+first time, it takes a time until replication is complete.  For this scenario
+you can provide a proxy mode, which switches your apps data source to the
+remote, like a usual ajax app. And then pull the data in the background.  But
+why not replicate the data which have been transmitted to the client directly
+to the database? This takes us to the idea of having a different replication
+source: views.  Replication does not transfer revisions, which are already
+locally present, twice. That way you can optimize bandwidth via this approach.
+
+This replication implementation is based on `allDocs` by now.
 
 ## Dependencies
 Mini P requires Node v8.
