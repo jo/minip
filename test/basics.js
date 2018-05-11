@@ -161,7 +161,7 @@ Ps.forEach(P => {
           })
       })
 
-      s.test('allDocs includes conflict', t => {
+      s.test('simple conflict', t => {
         return db.bulkDocs([{ _id: 'foo', n: 1, _rev: '1-abc' }, { _id: 'foo', n: 2, _rev: '1-def' }], { new_edits: false })
           .then(() => db.allDocs({ conflicts: true }))
           .then(response => {
@@ -187,38 +187,25 @@ Ps.forEach(P => {
           })
       })
 
-      s.test('allDocs with two conflicts', t => {
+      s.test('two conflicting revisions', t => {
         return db.bulkDocs([{ _id: 'foo', n: 1, _rev: '1-abc' }, { _id: 'foo', n: 2, _rev: '1-def' }, { _id: 'foo', n: 3, _rev: '1-ghi' }], { new_edits: false })
           .then(() => db.allDocs({ conflicts: true }))
-          .then(response => {
-            // if (db._store) console.log(JSON.stringify(db._store))
-            // {
-            //   "foo": {
-            //     "_id": "foo",
-            //     "revMap": {
-            //       "1-abc": {
-            //         "_id": "foo",
-            //         "n": 1,
-            //         "_rev": "1-abc"
-            //       },
-            //       "1-def": {
-            //         "_id": "foo",
-            //         "n": 2,
-            //         "_rev": "1-def"
-            //       },
-            //       "1-ghi": {
-            //         "_id": "foo",
-            //         "n": 3,
-            //         "_rev": "1-ghi"
-            //       }
-            //     },
-            //     "winningRev": "1-ghi"
-            //   }
-            // }
-
-            return response.shift()
+          .then(([doc]) => {
+            t.ok(Array.isArray(doc._conflicts), '_conflicts is an array')
+            t.equal(doc._conflicts.length, 2, '_conflicts contain single entry')
+            return doc._conflicts
           })
-          .then(doc => {
+          .then(revs => {
+            t.ok(revs.indexOf('1-def') !== -1, 'includes first rev')
+            t.ok(revs.indexOf('1-abc') !== -1, 'includes second rev')
+          })
+      })
+
+      s.test('two conflicting revisions, then update winning rev', t => {
+        return db.bulkDocs([{ _id: 'foo', n: 1, _rev: '1-abc' }, { _id: 'foo', n: 2, _rev: '1-def' }, { _id: 'foo', n: 3, _rev: '1-ghi' }], { new_edits: false })
+          .then(() => db.bulkDocs([{ _id: 'foo', n: 4, _rev: '1-ghi' }]))
+          .then(() => db.allDocs({ conflicts: true }))
+          .then(([doc]) => {
             t.ok(Array.isArray(doc._conflicts), '_conflicts is an array')
             t.equal(doc._conflicts.length, 2, '_conflicts contain single entry')
             return doc._conflicts
