@@ -16,7 +16,7 @@ Ps.forEach(P => {
   
     g.beforeEach(() => db.reset())
 
-    g.test('bulkDocs returns a promise', t => db.bulkDocs())
+    g.test('returns a promise', t => db.bulkDocs())
 
     test('single document insert', g => {
       const doc = {_id: 'foo', bar: 'baz' }
