@@ -188,21 +188,21 @@ Ps.forEach(P => {
           })
       })
 
-      s.test('document update with higher rev pos', t => {
-        return db.bulkDocs([{ _id: 'foo', bar: 'baz' }])
-          .then(([{ rev }]) => {
-            return db.bulkDocs([{ _id: 'foo', bar: 'barz', _rev: '2-00000000000000000000000000000000' }], { new_edits: false })
+      s.test('document update with _revisions', t => {
+        return db.bulkDocs([{ _id: 'foo', bar: 'baz', _rev: '1-abc' }, { _id: 'foo', bar: 'barz', _rev: '1-def' }], { new_edits: false })
+          .then(() => {
+            return db.bulkDocs([{ _id: 'foo', bar: 'barz', _rev: '2-ghi', _revisions: { start: 2, ids: ['ghi', 'abc'] } }], { new_edits: false })
               .then(() => get(db, 'foo'))
               .then(doc => {
-                t.equal(doc._rev, '2-00000000000000000000000000000000', 'has correct rev')
+                t.equal(doc._rev, '2-ghi', 'has correct rev')
                 t.equal(doc.bar, 'barz', 'bar is barz')
                 
                 t.same(doc._conflicts, [
-                  rev
+                  '1-def'
                 ], 'correct _conflicts')
                 t.same(doc._revisions, {
                   start: 2,
-                  ids: ['00000000000000000000000000000000']
+                  ids: ['ghi', 'abc']
                 }, '_revisions set correctly')
               })
           })
