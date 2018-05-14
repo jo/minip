@@ -1,7 +1,7 @@
 # Mini P
-Mini P (german abbr for Mini Pizza) is the very basics you needed to replicate
+Mini P (Berlin slang for Mini-Pizza) is the very basics you needed to replicate
 with a CouchDB. Its not something you would consider using in production in any
-way. Mini P is a playground, a learning project.
+way.
 
 ## Adapters
 Mini P provides two adapters by now:
@@ -59,6 +59,7 @@ local.bulkDocs([{ _id: 'foo', bar: 'baz' }])
 * Update a doc, increment `_rev`
 * choose winning rev
 * replicating a whole database
+* merge `_revisions` tree on `new_edits:false`
 
 ### What does not work
 Everything else.
