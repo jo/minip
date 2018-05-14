@@ -63,13 +63,12 @@ local.bulkDocs([{ _id: 'foo', bar: 'baz' }])
 ### What does not work
 Everything else.
 
-No changes feed atm. No views. Almost no error handling. No rev tree merge. No
-deletes. No checkpointing. No revs diff. Hah, no attachments for sure.
+No changes feed atm. No views. Almost no error handling. No deletes. No
+checkpointing. No revs diff. Hah: no attachments for sure.
 
 ### Whats next
-1. merge revtree
-2. deletions
-3. revsDiff
+1. deletions
+2. `revsDiff`
 
 ## Development
 The development process is pretty straight forward:

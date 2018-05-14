@@ -9,9 +9,9 @@ const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('
 //   ids: {
 //     "mydoc": {
 //       head: "ghi",
-//       branches: [
-//         "def"
-//       ]
+//       branches: {
+//         "def": 2
+//       }
 //     }
 //   },
 //   revs: {
@@ -48,7 +48,7 @@ const fromStore = (store, _id, { revs, conflicts }) => {
 
   // if `options.conflicts` and there are conflicts, get conflicts from branches
   // lookup full revisions (including revision position)
-  const _conflicts = conflicts && store.ids[_id].branches && store.ids[_id].branches.length ? store.ids[_id].branches.map(rev => store.revs[rev].body._rev).reverse() : null
+  const _conflicts = conflicts && store.ids[_id].branches && Object.keys(store.ids[_id].branches).length ? Object.keys(store.ids[_id].branches).map(rev => `${store.ids[_id].branches[rev]}-${rev}`).reverse() : null
 
   // if `options.revs`, return a revisions object including start and revision tree
   const _revisions = revs ? { start: parseInt(body._rev, 10), ids: getRevTree(store, rev) } : null
@@ -107,16 +107,16 @@ const intoStore = (store, { new_edits }) => {
       // choose winning revision based on pos and id
       store.ids[doc._id].head = newRevPos > existingRevPos ? newRevId : winningRevId(newRevId, existingRevId)
 
-      store.ids[doc._id].branches = store.ids[doc._id].branches || []
+      store.ids[doc._id].branches = store.ids[doc._id].branches || {}
 
       // do we need to update a branch?
       if (existingRevId && existingRevId !== store.ids[doc._id].head) {
         // if we won, store the existing rev as branch
-        store.ids[doc._id].branches.push(existingRevId)
+        store.ids[doc._id].branches[existingRevId] = existingRevPos
       }
       if (newRevId !== store.ids[doc._id].head) {
         // if old rev won, store new rev as branch
-        store.ids[doc._id].branches.push(newRevId)
+        store.ids[doc._id].branches[newRevId] = newRevPos
       }
     } else {
       // on new edits, always update head
@@ -130,9 +130,28 @@ const intoStore = (store, { new_edits }) => {
     store.revs[newRevId] = store.revs[newRevId] || {}
     store.revs[newRevId].body = doc
     
-    // link parent revision
-    if (new_edits !== false) {
-      store.revs[newRevId].parent = givenRevId
+    if (new_edits === false) {
+      // loop over each node and create a revision if not existent
+      if (doc._revisions && doc._revisions.ids.length > 1) {
+        var previousRevId
+        var currentRevId
+        
+        for (var i = 1; i < doc._revisions.ids.length; i++) {
+          previousRevId = doc._revisions.ids[i-1]
+          currentRevId = doc._revisions.ids[i]
+
+          store.revs[previousRevId] = store.revs[previousRevId] || {}
+          store.revs[previousRevId].parent = currentRevId
+          
+          // delete branch
+          if (store.ids[doc._id].branches && currentRevId in store.ids[doc._id].branches) {
+            delete store.ids[doc._id].branches[currentRevId]
+          }
+        }
+      }
+    } else {
+      // link parent revision
+      store.revs[newRevId].parent = existingRevId
     }
 
     // return value with ok, id and new revision
