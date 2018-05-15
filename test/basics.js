@@ -46,12 +46,12 @@ Ps.forEach(P => {
         .then(([{ rev }]) => {
           const revId1 = rev.split('-')[1]
 
-          return db.bulkDocs([{ _id: 'foo', bar: 'barz', _rev: rev }])
+          return db.bulkDocs([{ _id: 'foo', bar: 'qux', _rev: rev }])
             .then(() => get(db, 'foo'))
             .then(doc => {
               t.equal(doc._id, 'foo', '_id is correct')
               t.match(doc._rev, /^2-[a-f0-9]{32}$/, 'has a _rev 2')
-              t.equal(doc.bar, 'barz', 'bar is barz')
+              t.equal(doc.bar, 'qux', 'bar is qux')
 
               const revId2 = doc._rev.split('-')[1]
 
@@ -69,7 +69,7 @@ Ps.forEach(P => {
         .then(([{ rev }]) => {
           const revId1 = rev.split('-')[1]
 
-          return db.bulkDocs([{ _id: 'foo', bar: 'barz', _rev: rev }])
+          return db.bulkDocs([{ _id: 'foo', bar: 'qux', _rev: rev }])
             .then(([{ rev }]) => {
               const revId2 = rev.split('-')[1]
 
@@ -93,7 +93,7 @@ Ps.forEach(P => {
     g.test('document update conflict', s => {
       s.test('missing rev', t => {
         return db.bulkDocs([{ _id: 'foo', bar: 'baz' }])
-          .then(() => db.bulkDocs([{ _id: 'foo', bar: 'barz' }]))
+          .then(() => db.bulkDocs([{ _id: 'foo', bar: 'qux' }]))
           .then(([response]) => {
             // console.log(JSON.stringify(response))
             // {
@@ -107,7 +107,7 @@ Ps.forEach(P => {
 
       s.test('revision mismatch', t => {
         return db.bulkDocs([{ _id: 'foo', bar: 'baz' }])
-          .then(() => db.bulkDocs([{ _id: 'foo', bar: 'barz', _rev: '1-a' }]))
+          .then(() => db.bulkDocs([{ _id: 'foo', bar: 'qux', _rev: '1-a' }]))
           .then(([response]) => {
             // console.log(JSON.stringify(response))
             // {
@@ -125,7 +125,7 @@ Ps.forEach(P => {
     g.test('new_edits: false', s => {
       s.test('missing rev', t => {
         return db.bulkDocs([{ _id: 'foo', bar: 'baz' }])
-          .then(() => db.bulkDocs([{ _id: 'foo', bar: 'barz' }], { new_edits: false }))
+          .then(() => db.bulkDocs([{ _id: 'foo', bar: 'qux' }], { new_edits: false }))
           .then(() => t.error('nope', 'should fail instead'))
           .catch(e => t.pass('errored'))
       })
@@ -151,7 +151,7 @@ Ps.forEach(P => {
           .then(([{ rev }]) => {
             const revId = rev.split('-')[1]
 
-            return db.bulkDocs([{ _id: 'foo', bar: 'barz', _rev: '1-00000000000000000000000000000000' }], { new_edits: false })
+            return db.bulkDocs([{ _id: 'foo', bar: 'qux', _rev: '1-00000000000000000000000000000000' }], { new_edits: false })
               .then(() => get(db, 'foo'))
               .then(doc => {
                 t.equal(doc._rev, rev, 'has correct rev')
@@ -171,11 +171,11 @@ Ps.forEach(P => {
       s.test('document update with higher rev id', t => {
         return db.bulkDocs([{ _id: 'foo', bar: 'baz' }])
           .then(([{ rev }]) => {
-            return db.bulkDocs([{ _id: 'foo', bar: 'barz', _rev: '1-ffffffffffffffffffffffffffffffff' }], { new_edits: false })
+            return db.bulkDocs([{ _id: 'foo', bar: 'qux', _rev: '1-ffffffffffffffffffffffffffffffff' }], { new_edits: false })
               .then(() => get(db, 'foo'))
               .then(doc => {
                 t.equal(doc._rev, '1-ffffffffffffffffffffffffffffffff', 'has correct rev')
-                t.equal(doc.bar, 'barz', 'bar is barz')
+                t.equal(doc.bar, 'qux', 'bar is qux')
                 
                 t.same(doc._conflicts, [
                   rev
@@ -189,13 +189,13 @@ Ps.forEach(P => {
       })
 
       s.test('document update with _revisions', t => {
-        return db.bulkDocs([{ _id: 'foo', bar: 'baz', _rev: '1-abc' }, { _id: 'foo', bar: 'barz', _rev: '1-def' }], { new_edits: false })
+        return db.bulkDocs([{ _id: 'foo', bar: 'baz', _rev: '1-abc' }, { _id: 'foo', bar: 'qux', _rev: '1-def' }], { new_edits: false })
           .then(() => {
-            return db.bulkDocs([{ _id: 'foo', bar: 'barz', _rev: '2-ghi', _revisions: { start: 2, ids: ['ghi', 'abc'] } }], { new_edits: false })
+            return db.bulkDocs([{ _id: 'foo', bar: 'qux', _rev: '2-ghi', _revisions: { start: 2, ids: ['ghi', 'abc'] } }], { new_edits: false })
               .then(() => get(db, 'foo'))
               .then(doc => {
                 t.equal(doc._rev, '2-ghi', 'has correct rev')
-                t.equal(doc.bar, 'barz', 'bar is barz')
+                t.equal(doc.bar, 'qux', 'bar is qux')
                 
                 t.same(doc._conflicts, [
                   '1-def'

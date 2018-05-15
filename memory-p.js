@@ -28,7 +28,7 @@ const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('
 //     },
 //     "ghi": {
 //       body: {
-//         foo: 'barz'
+//         foo: 'qux'
 //       },
 //       parent: "abc"
 //     }

@@ -43,13 +43,13 @@ test('MemoryP', g => {
       .then(([{ rev }]) => {
         const [_, revId1] = rev.split('-')
 
-        return db.bulkDocs([{ _id: 'foo', bar: 'barz', _rev: rev }])
+        return db.bulkDocs([{ _id: 'foo', bar: 'qux', _rev: rev }])
           .then(([{ rev }]) => {
             const [_, revId2] = rev.split('-')
 
             t.ok(revId2 in db._store.revs, 'revision is in revs')
             t.ok('body' in db._store.revs[revId2], 'doc in revs')
-            t.equal(db._store.revs[revId2].body.bar, 'barz', 'bar is set')
+            t.equal(db._store.revs[revId2].body.bar, 'qux', 'bar is set')
             t.equal(db._store.revs[revId2].parent, revId1, 'parent is set to rev1')
 
             t.ok('foo' in db._store.ids, 'foo in ids')
