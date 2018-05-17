@@ -13,3 +13,18 @@ module.exports = (source, target) => {
       return target.bulkDocs(docs, { new_edits: false })
     })
 }
+
+// auch denkbar:
+//
+// const replicate = (source, target, options = { since: 0 }) => {
+//   return pull(
+//     // get to know which docs to replicate
+//     source.viewer({ since }),
+//
+//     // get docs from source
+//     source.reader({ revs: true }),
+//
+//     // write docs to target
+//     target.writer({ new_edits: false })
+//   )
+// }
