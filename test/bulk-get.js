@@ -13,7 +13,7 @@ const Ps = [
 Ps.forEach(P => {
   test(P.name, g => {
     const db = new P(url)
-  
+
     g.beforeEach(() => db.reset())
 
     g.test('returns a promise', t => db.bulkGet())
@@ -42,7 +42,7 @@ Ps.forEach(P => {
           // }
 
           t.equal(element.id, 'foo', 'id is correct')
-          
+
           t.ok(Array.isArray(element.docs), 'is an array')
           t.equal(element.docs.length, 1, 'has single element')
           return element.docs.shift()
@@ -70,7 +70,7 @@ Ps.forEach(P => {
           //     "b3cec23b98d5f20d20a8279878ddce3d"
           //   ]
           // }
-          
+
           // console.log(JSON.stringify(db._store))
 
           t.type(_revisions, 'object', '_revisions is an object')
@@ -81,9 +81,7 @@ Ps.forEach(P => {
           t.match(_revisions.ids[1], /^[a-f0-9]{32}$/, 'second id look like a rev')
         })
     })
-    
+
     g.end()
   })
 })
-
-

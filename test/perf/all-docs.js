@@ -26,9 +26,9 @@ Ps.forEach(P => {
 
     g.beforeEach(() => db.reset())
 
-    for (let BATCH_SIZE = 1000; BATCH_SIZE < 100001; BATCH_SIZE=BATCH_SIZE*10) {
+    for (let BATCH_SIZE = 1000; BATCH_SIZE < 100001; BATCH_SIZE = BATCH_SIZE * 10) {
       g.test(`allDocs #${BATCH_SIZE}`, t => {
-        docs = generateDocs(BATCH_SIZE)
+        const docs = generateDocs(BATCH_SIZE)
 
         return db.bulkDocs(docs, { new_edits: false })
           .then(() => {

@@ -22,7 +22,7 @@ Pairs.forEach(([Source, Target]) => {
   test(`${Source.name} -> ${Target.name}`, g => {
     const source = new Source(url)
     const target = new Target(url)
-  
+
     g.beforeEach(() => clean(source, target))
 
     g.test('replicates single document', t => {
@@ -34,7 +34,7 @@ Pairs.forEach(([Source, Target]) => {
           t.equal(docs[0]._id, 'foo', 'foo present on target')
         })
     })
-    
+
     g.test('replicates multiple documents', t => {
       return source.bulkDocs([{ _id: 'foo', bar: 1 }, { _id: 'bar', bar: 1 }])
         .then(() => replicate(source, target))
@@ -43,7 +43,7 @@ Pairs.forEach(([Source, Target]) => {
           t.equal(docs.length, 2, 'two docs present on target')
         })
     })
-    
+
     g.test('replicates document update', t => {
       return source.bulkDocs([{ _id: 'foo', bar: 1 }])
         .then(([{ rev }]) => {
@@ -59,7 +59,7 @@ Pairs.forEach(([Source, Target]) => {
             })
         })
     })
-    
+
     g.end()
   })
 })

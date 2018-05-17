@@ -13,7 +13,7 @@ const Ps = [
 Ps.forEach(P => {
   test(P.name, g => {
     const db = new P(url)
-  
+
     g.beforeEach(() => db.reset())
 
     g.test('returns a promise', t => db.allDocs())
@@ -32,9 +32,7 @@ Ps.forEach(P => {
           t.equal(doc.bar, 'baz', 'bar is baz')
         })
     })
-    
+
     g.end()
   })
 })
-
-

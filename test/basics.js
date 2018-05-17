@@ -15,14 +15,14 @@ const get = (db, id) => {
     })
     .then(doc => {
       return db.bulkGet([{ id: doc._id, rev: doc._rev }], { revs: true })
-        .then(([{docs: [{ ok }]}]) => ({ ...ok, _conflicts: doc._conflicts }))
+        .then(([{ docs: [{ ok }] }]) => ({ ...ok, _conflicts: doc._conflicts }))
     })
 }
 
 Ps.forEach(P => {
   test(P.name, g => {
     const db = new P(url)
-  
+
     g.beforeEach(() => db.reset())
 
     g.test('document creation', t => {
@@ -32,7 +32,7 @@ Ps.forEach(P => {
           t.equal(doc._id, 'foo', '_id is correct')
           t.match(doc._rev, /^1-[a-f0-9]{32}$/, 'has a _rev 1')
           t.equal(doc.bar, 'baz', 'bar is baz')
-          
+
           t.notOk(doc._conflicts, 'no conflicts')
           t.same(doc._revisions, {
             start: 1,
@@ -77,14 +77,14 @@ Ps.forEach(P => {
                 .then(() => get(db, 'foo'))
                 .then(doc => {
                   t.match(doc._rev, /^3-[a-f0-9]{32}$/, 'has a _rev 3')
-                  
+
                   const revId3 = doc._rev.split('-')[1]
 
                   t.notOk(doc._conflicts, 'no conflicts')
                   t.same(doc._revisions, {
-                      start: 3,
-                      ids: [revId3, revId2, revId1]
-                    }, '_revisions set correctly')
+                    start: 3,
+                    ids: [revId3, revId2, revId1]
+                  }, '_revisions set correctly')
                 })
             })
         })
@@ -145,7 +145,7 @@ Ps.forEach(P => {
             }, '_revisions set correctly')
           })
       })
-    
+
       s.test('document update with lower rev', t => {
         return db.bulkDocs([{ _id: 'foo', bar: 'baz' }])
           .then(([{ rev }]) => {
@@ -156,7 +156,7 @@ Ps.forEach(P => {
               .then(doc => {
                 t.equal(doc._rev, rev, 'has correct rev')
                 t.equal(doc.bar, 'baz', 'bar is baz')
-                
+
                 t.same(doc._conflicts, [
                   '1-00000000000000000000000000000000'
                 ], 'correct _conflicts')
@@ -176,7 +176,7 @@ Ps.forEach(P => {
               .then(doc => {
                 t.equal(doc._rev, '1-ffffffffffffffffffffffffffffffff', 'has correct rev')
                 t.equal(doc.bar, 'qux', 'bar is qux')
-                
+
                 t.same(doc._conflicts, [
                   rev
                 ], 'correct _conflicts')
@@ -196,7 +196,7 @@ Ps.forEach(P => {
               .then(doc => {
                 t.equal(doc._rev, '2-ghi', 'has correct rev')
                 t.equal(doc.bar, 'qux', 'bar is qux')
-                
+
                 t.same(doc._conflicts, [
                   '1-def'
                 ], 'correct _conflicts')

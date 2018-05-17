@@ -8,9 +8,10 @@ const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('
 // {
 //   ids: {
 //     "mydoc": {
-//       head: "ghi",
+//       winner: "ghi",
 //       branches: {
-//         "def": 2
+//         "def": 2,
+//         "ghi": 2
 //       }
 //     }
 //   },
@@ -21,9 +22,6 @@ const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('
 //       }
 //     },
 //     "def": {
-//       body: {
-//         foo: 'baz'
-//       },
 //       parent: "abc"
 //     },
 //     "ghi": {
@@ -40,140 +38,210 @@ const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('
 // * `revs`: include `_revisions` object
 // * `conflicts`: include `_conflicts` array
 const fromStore = (store, _id, { revs, conflicts }) => {
-  // get winning rev for doc
-  const rev = store.ids[_id].head
+  const info = store.ids[_id]
+  const revId = info.winner
+  const revPos = info.branches[info.winner]
+  const _rev = `${revPos}-${revId}`
 
   // get the document body
-  const body = store.revs[rev].body
+  const body = store.revs[revId].body
 
-  // if `options.conflicts` and there are conflicts, get conflicts from branches
-  // lookup full revisions (including revision position)
-  const _conflicts = conflicts && store.ids[_id].branches && Object.keys(store.ids[_id].branches).length ? Object.keys(store.ids[_id].branches).map(rev => `${store.ids[_id].branches[rev]}-${rev}`).reverse() : null
-
-  // if `options.revs`, return a revisions object including start and revision tree
-  const _revisions = revs ? { start: parseInt(body._rev, 10), ids: getRevTree(store, rev) } : null
+  // get additional information if asked for
+  const _conflicts = conflicts ? getConflicts(info, revId) : null
+  const _revisions = revs ? getRevisions(store.revs, info, revId) : null
 
   return {
     ...body,
+    _id,
+    _rev,
     _conflicts,
     _revisions
+  }
+}
+
+// return a revisions object including start and revision tree
+const getRevisions = (revs, info, revId) => {
+  return {
+    start: info.branches[revId],
+    ids: getRevTree(revs, revId)
+  }
+}
+
+// if there are conflicts, get conflicts from branches
+// and return full revisions (including position)
+const getConflicts = (info, rev) => {
+  if (typeof info.branches !== 'object') return
+  if (Object.keys(info.branches).length <= 1) return
+
+  return Object.keys(info.branches)
+    .filter(id => id !== rev)
+    .map(rev => `${info.branches[rev]}-${rev}`)
+    .reverse()
+}
+
+const insertAsNewEdits = store => doc => {
+  // we need a doc id, otherwise we throw.
+  // in the future, we can generate an id if none is set.
+  if (typeof doc._id !== 'string') throw (new Error('No _id given'))
+
+  // get existing rev from store
+  const existingRevId = doc._id in store.ids && store.ids[doc._id].winner
+
+  // parse given document revision into position and id
+  const [givenRevPos, givenRevId] = parseRevision(doc._rev)
+
+  // ensure revision matches
+  if (existingRevId && existingRevId !== givenRevId) {
+    return {
+      id: doc._id,
+      error: 'conflict',
+      reason: 'Document update conflict.'
+    }
+  }
+
+  // strip doc from metadata
+  const body = stripMeta(doc)
+  // generate new rev
+  const newRevId = generateRevId(body, existingRevId)
+  const newRevPos = givenRevPos + 1
+
+  // calculate new rev
+  doc._rev = `${newRevPos}-${newRevId}`
+
+  // store the revision
+  store.revs[newRevId] = {
+    body,
+    parent: existingRevId
+  }
+
+  // store winner
+  store.ids[doc._id] = store.ids[doc._id] || { branches: {} }
+  store.ids[doc._id].winner = newRevId
+  store.ids[doc._id].branches[newRevId] = newRevPos
+
+  // delete previous winner branch
+  delete store.ids[doc._id].branches[givenRevId]
+
+  return {
+    ok: true,
+    id: doc._id,
+    rev: doc._rev
+  }
+}
+
+const insert = store => doc => {
+  // we need a doc id, otherwise we throw.
+  // in the future, we can generate an id if none is set.
+  if (typeof doc._id !== 'string') throw (new Error('No _id given'))
+
+  // parse given document revision into position and id
+  const [givenRevPos, givenRevId] = parseRevision(doc._rev)
+
+  // enforce presence of revision
+  if (!givenRevId) throw (new Error('no _rev given'))
+
+  // store the revision
+  store.revs[givenRevId] = {
+    body: doc
+  }
+
+  // loop over each node and create a revision if not existent
+  if (doc._revisions && doc._revisions.ids.length > 1) {
+    var previousRevId
+    var currentRevId
+
+    for (var i = 1; i < doc._revisions.ids.length; i++) {
+      previousRevId = doc._revisions.ids[i - 1]
+      currentRevId = doc._revisions.ids[i]
+
+      store.revs[previousRevId] = store.revs[previousRevId] || {}
+
+      // Possible optimisation:
+      // check for a conflict with current parent,
+      // see what couch does
+      // and maybe throw if parent does not match
+      store.revs[previousRevId].parent = currentRevId
+
+      // Another possible optimisation:
+      // stop walking the tree if parent is known
+
+      // delete branch
+      if (store.ids[doc._id].branches && currentRevId in store.ids[doc._id].branches) {
+        delete store.ids[doc._id].branches[currentRevId]
+      }
+    }
+  }
+
+  // get existing rev from store
+  const existingRevId = doc._id in store.ids && store.ids[doc._id].winner
+  const existingRevPos = (existingRevId && store.ids[doc._id].branches[existingRevId]) || 0
+
+  // store / update branches
+  store.ids[doc._id] = store.ids[doc._id] || { branches: {} }
+  store.ids[doc._id].branches[givenRevId] = givenRevPos
+
+  // choose winning rev
+  const winningRevId = chooseWinningRevId(
+    [givenRevPos, givenRevId],
+    [existingRevPos, existingRevId]
+  )
+
+  // store winner
+  store.ids[doc._id].winner = winningRevId
+
+  // return value with ok, id and new revision
+  return {
+    ok: true,
+    id: doc._id,
+    rev: doc._rev
   }
 }
 
 // Mutate `store`, insert document
 // Options can be
 // * `new_edits`: if set to `false` do not generate new rev
-const intoStore = (store, { new_edits }) => {
-  return doc => {
-    // we need a doc id, otherwise we throw.
-    // in the future, we can generate an id if none is set.
-    if (typeof doc._id !== 'string') throw(new Error('No _id given'))
-
-    // setup id object
-    store.ids[doc._id] = store.ids[doc._id] || {}
-    
-    // get existing rev from store
-    const existingRevId = store.ids[doc._id].head
-    // get existing rev tree from store
-    const existingRevTree = existingRevId ? getRevTree(store, existingRevId) : []
-    // rev pos of existing rev is length of tree
-    const existingRevPos = existingRevTree.length
-
-    // parse given document revision into position and id
-    const [givenRevPos, givenRevId] = doc._rev ? doc._rev.split('-') : []
-
-    // ensure revision matches
-    if (new_edits !== false && existingRevId && existingRevId !== givenRevId) {
-      return {
-        id: doc._id,
-        error: 'conflict',
-        reason: 'Document update conflict.'
-      }
-    }
-
-    // enforce presence of revision on new_edits:false
-    if (new_edits === false && !givenRevId) throw(new Error('no _rev given'))
-    
-    // new rev id will be the given one in case of new_edits:false
-    // otherwise generate a rev id
-    const newRevId = new_edits === false ? givenRevId : generateRevId(doc)
-    
-    // new rev position will be given rev pos when new_edits:false
-    // otherwise, increse the given one (must be same as existing one)
-    const newRevPos = new_edits === false ? givenRevPos : calculateRevPos(givenRevPos)
-
-    // store head and branches
-    if (new_edits === false) {
-      // choose winning revision based on pos and id
-      store.ids[doc._id].head = newRevPos > existingRevPos ? newRevId : winningRevId(newRevId, existingRevId)
-
-      store.ids[doc._id].branches = store.ids[doc._id].branches || {}
-
-      // do we need to update a branch?
-      if (existingRevId && existingRevId !== store.ids[doc._id].head) {
-        // if we won, store the existing rev as branch
-        store.ids[doc._id].branches[existingRevId] = existingRevPos
-      }
-      if (newRevId !== store.ids[doc._id].head) {
-        // if old rev won, store new rev as branch
-        store.ids[doc._id].branches[newRevId] = newRevPos
-      }
-    } else {
-      // on new edits, always update head
-      store.ids[doc._id].head = newRevId
-    }
-
-    // calculate new rev
-    doc._rev = `${newRevPos}-${newRevId}`
-
-    // store the revision
-    store.revs[newRevId] = store.revs[newRevId] || {}
-    store.revs[newRevId].body = doc
-    
-    if (new_edits === false) {
-      // loop over each node and create a revision if not existent
-      if (doc._revisions && doc._revisions.ids.length > 1) {
-        var previousRevId
-        var currentRevId
-        
-        for (var i = 1; i < doc._revisions.ids.length; i++) {
-          previousRevId = doc._revisions.ids[i-1]
-          currentRevId = doc._revisions.ids[i]
-
-          store.revs[previousRevId] = store.revs[previousRevId] || {}
-          store.revs[previousRevId].parent = currentRevId
-          
-          // delete branch
-          if (store.ids[doc._id].branches && currentRevId in store.ids[doc._id].branches) {
-            delete store.ids[doc._id].branches[currentRevId]
-          }
-        }
-      }
-    } else {
-      // link parent revision
-      store.revs[newRevId].parent = existingRevId
-    }
-
-    // return value with ok, id and new revision
-    return {
-      ok: true,
-      id: doc._id,
-      rev: doc._rev
-    }
-  }
+const intoStore = (store, { new_edits = true }) => {
+  return new_edits ? insertAsNewEdits(store) : insert(store)
 }
 
 // walk up the parents and build array of ancestor rev ids
-const getRevTree = (store, rev) => rev in store.revs && store.revs[rev].parent ? [rev].concat(getRevTree(store, store.revs[rev].parent)) : [rev]
+const getRevTree = (revs, rev) => rev in revs && revs[rev].parent ? [rev].concat(getRevTree(revs, revs[rev].parent)) : [rev]
 
-// calculate winning rev id based on alphabetical order
-const winningRevId = (a, b) => a < b ? b : a
+// calculate winning rev id based on rev pos and alphabetical order of rev id
+const chooseWinningRevId = ([aPos, aId], [bPos, bId]) => {
+  if (aPos > bPos) return aId
+  if (aPos < bPos) return bId
 
-// generate revision id, that is a checksum over doc
-const generateRevId = doc => md5(JSON.stringify(doc))
+  return aId > bId ? aId : bId
+}
 
-// if given rev position, increment it. Otherwise return 1
-const calculateRevPos = givenRevPos => givenRevPos ? parseInt(givenRevPos, 10) + 1 : 1
+// generate revision id,
+// that is a checksum over doc and rev
+// without toplevel properties keys starting with `_`
+const stripMeta = doc => {
+  const payload = {
+    ...doc
+  }
+
+  Object.keys(payload)
+    .filter(key => key[0] === '_')
+    .forEach(key => delete payload[key])
+
+  return payload
+}
+
+const generateRevId = (doc, _rev) => md5(JSON.stringify({ ...doc, _rev }))
+
+const parseRevision = rev => {
+  if (!rev) return [0]
+
+  const [pos, id] = rev.split('-')
+
+  return [
+    parseInt(pos, 10) || 0,
+    id
+  ]
+}
 
 module.exports = class MemoryP {
   constructor () {
@@ -182,13 +250,13 @@ module.exports = class MemoryP {
 
   reset () {
     this._store = { ids: {}, revs: {} }
-    
+
     return Promise.resolve()
   }
-  
+
   bulkDocs (docs = [], options = {}) {
     const response = docs.map(intoStore(this._store, options))
-    
+
     return Promise.resolve(response)
   }
 

@@ -13,13 +13,13 @@ const Ps = [
 Ps.forEach(P => {
   test(P.name, g => {
     const db = new P(url)
-  
+
     g.beforeEach(() => db.reset())
 
     g.test('returns a promise', t => db.bulkDocs())
 
     test('single document insert', g => {
-      const doc = {_id: 'foo', bar: 'baz' }
+      const doc = { _id: 'foo', bar: 'baz' }
 
       return db.bulkDocs([doc])
         .then(response => {
@@ -59,7 +59,7 @@ Ps.forEach(P => {
     })
 
     test('document insert with new_edits:false', t => {
-      const doc = {_id: 'foo', bar: 'baz', _rev: '3-abc' }
+      const doc = { _id: 'foo', bar: 'baz', _rev: '3-abc' }
 
       return db.bulkDocs([doc], { new_edits: false })
         .then((response) => {
@@ -71,9 +71,7 @@ Ps.forEach(P => {
           }
         })
     })
-    
+
     g.end()
   })
 })
-
-
