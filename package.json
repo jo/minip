@@ -1,20 +1,28 @@
 {
   "name": "minip",
-  "version": "1.0.0",
-  "description": "minip is a very basics you needed to replicate with a CouchDB.",
+  "version": "0.0.0-development",
+  "description": "Mini P is the very basics you need to replicate with a CouchDB.",
   "main": "index.js",
   "scripts": {
     "test": "tap --reporter=spec test/*.js test/memory-p/*.js",
-    "test:perf": "tap --reporter=spec test/perf/*.js"
+    "test:perf": "tap --reporter=spec test/perf/*.js",
+    "travis-deploy-once": "travis-deploy-once",
+    "semantic-release": "semantic-release"
   },
   "keywords": [],
   "author": "Johannes J. Schmidt",
   "license": "Apache-2.0",
   "devDependencies": {
     "pull-stream": "^3.6.8",
-    "tap": "^12.0.1"
+    "tap": "^12.0.1",
+    "travis-deploy-once": "^5.0.0",
+    "semantic-release": "^15.5.0"
   },
   "dependencies": {
     "request": "^2.87.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jo/minip.git"
   }
 }
