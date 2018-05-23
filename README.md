@@ -3,6 +3,8 @@ Mini P (Berlin slang for mini pizza) is the very basics you needed to replicate
 with a CouchDB. Its not something you would consider using in production in any
 way.
 
+[![Build Status](https://travis-ci.org/jo/minip.svg?branch=master)](https://travis-ci.org/jo/minip)
+
 ## Adapters
 Mini P provides two adapters by now:
 
