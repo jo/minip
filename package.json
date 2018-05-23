@@ -11,10 +11,10 @@
   "author": "Johannes J. Schmidt",
   "license": "Apache-2.0",
   "devDependencies": {
-    "tap": "^11.1.4"
+    "pull-stream": "^3.6.8",
+    "tap": "^12.0.1"
   },
   "dependencies": {
-    "pull-stream": "^3.6.8",
-    "request-promise-native": "^1.0.5"
+    "request": "^2.87.0"
   }
 }

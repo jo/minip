@@ -1,5 +1,5 @@
 # Mini P
-Mini P (Berlin slang for Mini-Pizza) is the very basics you needed to replicate
+Mini P (Berlin slang for mini pizza) is the very basics you needed to replicate
 with a CouchDB. Its not something you would consider using in production in any
 way.
 
@@ -12,43 +12,62 @@ Mini P provides two adapters by now:
 both share the same interface.
 
 ## API
-The API is nothing but the methods needed for replication:
+The API is just two methods
 
-* `allDocs(options)`
-* `bulkDocs(docs, options)`
-* `bulkGet(docs, options)`
+* `read(options)`
+* `write(docs, options)`
 
-API is a subset of CouchDB's API which is the absolute essential for
-replication. It's aligned to CouchDB API as near as possible.
+* For `read` you pass `{ revs: true }` and get `_revisions` included in the documents
+* For `write` you can pass `{ new_edits: false }` to circumvent optimistic locking
 
-* For `bulkDocs` you can pass `{ new_edits: false }` to circumvent optimistic locking
-* For `bulkGet` you pass `{ revs: true }` and get the rev tree.
-* For `allDocs` and `bulkGet` you pass `{ conflicts: true }` and get the conflicts.
+### Pull Streams
+You can create pull-streams out of an adapter by calling `stream.reader(db)` or
+`stream.writer(db)`.
+
 
 ## Replication
-And you get a `replicate(source, target)` API, which replicates an entire database.
+For replication you just pipe a `reader` stream into a `writer` stream:
 
-The CouchDB replication protocol replicates documents via the changes feed. This replication implementation, though, is based on `allDocs` by now.
+```js
+pull(
+  stream.reader(source)({ revs: true }),
+  stream.writer(target)({ new_edits: false })
+)
+```
+
+The CouchDB replication protocol replicates documents via the changes feed. This replication, though, is based on `allDocs` by now.
 
 ## Dependencies
 Mini P requires Node v8.
+The only npm dependency is `request`, which is used for the HttpP adapter.
 
 ## Example
 ```js
-import { HttpP, MemoryP, replicate } from 'minip'
+import { HttpP, MemoryP, stream } from 'minip'
+import pull from 'pull-stream'
+import onEnd from 'pull-stream/sinks/on-end'
 
 const local = new MemoryP()
 const remote = new HttpP('http://localhost:5984/mydb')
 
-local.bulkDocs([{ _id: 'foo', bar: 'baz' }])
-  .then(() => replicate(local, remote))
-  .then(() => remote.allDocs())
-  .then(([doc]) => console.log(doc))
-  // {
-  //   _id: 'foo',
-  //   _rev: '1-b3cec23b98d5f20d20a8279878ddce3d',
-  //   bar: 'baz'
-  // }
+// write to local database
+local.write([{ _id: 'foo', bar: 'baz' }], (error, response) => {
+  // replicate local to remote
+  pull(
+    stream.reader(source)({ revs: true }),
+    stream.writer(target)({ new_edits: false }),
+    onEnd(() => {
+      // once finished, query remote db
+      remote.read((error, [doc]) => {
+        // {
+        //   _id: 'foo',
+        //   _rev: '1-b3cec23b98d5f20d20a8279878ddce3d',
+        //   bar: 'baz'
+        // }
+      })
+    })
+  )
+})
 ```
 
 ## State of Mini P
@@ -64,12 +83,8 @@ local.bulkDocs([{ _id: 'foo', bar: 'baz' }])
 ### What does not work
 Everything else.
 
-No changes feed atm. No views. Almost no error handling. No deletes. No
+No changes feed. No views. Almost no error handling. No deletes. No
 checkpointing. No revs diff. Hah: no attachments for sure.
-
-### Whats next
-1. deletions
-2. `revsDiff`
 
 ## Development
 The development process is pretty straight forward:

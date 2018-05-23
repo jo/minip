@@ -34,6 +34,7 @@ const md5 = string => crypto.createHash('md5').update(string, 'binary').digest('
 // }
 
 // Get a document by id from store.
+// TODO: support find by rev
 // Options can be
 // * `revs`: include `_revisions` object
 // * `conflicts`: include `_conflicts` array
@@ -46,17 +47,17 @@ const fromStore = (store, _id, { revs, conflicts }) => {
   // get the document body
   const body = store.revs[revId].body
 
-  // get additional information if asked for
-  const _conflicts = conflicts ? getConflicts(info, revId) : null
-  const _revisions = revs ? getRevisions(store.revs, info, revId) : null
-
-  return {
+  const doc = {
     ...body,
     _id,
-    _rev,
-    _conflicts,
-    _revisions
+    _rev
   }
+
+  // get additional information if asked for
+  if (revs) doc._revisions = getRevisions(store.revs, info, revId)
+  if (conflicts) doc._conflicts = getConflicts(info, revId)
+
+  return doc
 }
 
 // return a revisions object including start and revision tree
@@ -248,40 +249,39 @@ module.exports = class MemoryP {
     this._store = { ids: {}, revs: {} }
   }
 
-  reset () {
+  reset (done) {
     this._store = { ids: {}, revs: {} }
-
-    return Promise.resolve()
+    done(null)
   }
 
-  bulkDocs (docs = [], options = {}) {
-    const response = docs.map(intoStore(this._store, options))
+  // get documents
+  read (options = {}, done) {
+    if (typeof options === 'function') {
+      done = options
+      options = {}
+    }
 
-    return Promise.resolve(response)
-  }
-
-  allDocs (options = {}) {
     const response = Object.keys(this._store.ids)
       .sort()
       .map(id => fromStore(this._store, id, options))
 
-    return Promise.resolve(response)
+    done(null, response)
   }
 
-  bulkGet (docs = [], options = {}) {
-    const response = docs
-      .map(doc => fromStore(this._store, doc.id, options))
-      .map(doc => {
-        return {
-          id: doc._id,
-          docs: [
-            {
-              ok: doc
-            }
-          ]
-        }
-      })
+  // write documents
+  //
+  // options can be
+  // * new_edits: if set to false, do not generate new revisions, use provided rev
+  write (docs, options = {}, done) {
+    if (typeof options === 'function') {
+      done = options
+      options = {}
+    }
 
-    return Promise.resolve(response)
+    if (!Array.isArray(docs)) docs = [docs]
+
+    const response = docs.map(intoStore(this._store, options))
+
+    done(null, response)
   }
 }

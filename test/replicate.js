@@ -1,6 +1,14 @@
 const { test } = require('tap')
+const pull = require('pull-stream')
 
-const replicate = require('../replicate')
+const stream = require('../stream')
+
+const replicate = (source, target) => {
+  return pull(
+    stream.reader(source)({ revs: true }),
+    stream.writer(target)({ new_edits: false })
+  )
+}
 
 const MemoryP = require('../memory-p')
 const HttpP = require('../http-p')
@@ -14,8 +22,8 @@ const Pairs = [
   [HttpP, HttpP]
 ]
 
-const clean = (source, target) => {
-  return Promise.all([source.reset(), target.reset()])
+const clean = (source, target, done) => {
+  source.reset(() => target.reset(() => done(null)))
 }
 
 Pairs.forEach(([Source, Target]) => {
@@ -23,41 +31,67 @@ Pairs.forEach(([Source, Target]) => {
     const source = new Source(url)
     const target = new Target(url)
 
-    g.beforeEach(() => clean(source, target))
+    g.beforeEach(done => clean(source, target, done))
 
     g.test('replicates single document', t => {
-      return source.bulkDocs([{ _id: 'foo', bar: 1 }])
-        .then(() => replicate(source, target))
-        .then(() => target.allDocs())
-        .then(docs => {
-          t.equal(docs.length, 1, 'single doc present on target')
-          t.equal(docs[0]._id, 'foo', 'foo present on target')
-        })
+      source.write([{ _id: 'foo', bar: 1 }], (error) => {
+        t.error(error)
+        pull(
+          replicate(source, target),
+          pull.collect((error, docs) => {
+            t.error(error)
+            target.read((error, [doc]) => {
+              t.error(error)
+              t.equal(doc._id, 'foo', 'foo present on target')
+              t.end()
+            })
+          })
+        )
+      })
     })
 
     g.test('replicates multiple documents', t => {
-      return source.bulkDocs([{ _id: 'foo', bar: 1 }, { _id: 'bar', bar: 1 }])
-        .then(() => replicate(source, target))
-        .then(() => target.allDocs())
-        .then(docs => {
-          t.equal(docs.length, 2, 'two docs present on target')
-        })
+      source.write([{ _id: 'foo', bar: 1 }, { _id: 'bar', bar: 2 }], (error) => {
+        t.error(error)
+        pull(
+          replicate(source, target),
+          pull.collect((error, docs) => {
+            t.error(error)
+            target.read((error, [doc1, doc2, d]) => {
+              t.error(error)
+              t.ok(doc1, 'doc one present on target')
+              t.ok(doc2, 'doc two present on target')
+              t.end()
+            })
+          })
+        )
+      })
     })
 
     g.test('replicates document update', t => {
-      return source.bulkDocs([{ _id: 'foo', bar: 1 }])
-        .then(([{ rev }]) => {
-          return replicate(source, target)
-            .then(() => source.bulkDocs([{ _id: 'foo', bar: 2, _rev: rev }]))
-            .then(([{ rev }]) => {
-              return replicate(source, target)
-                .then(() => target.allDocs())
-                .then(([doc]) => {
-                  t.equal(doc._id, 'foo', 'foo present on target')
-                  t.equal(doc._rev, rev, 'correct rev present on target')
+      source.write([{ _id: 'foo', bar: 1 }], (error, [{ rev }]) => {
+        t.error(error)
+        pull(
+          replicate(source, target),
+          pull.collect((error, docs) => {
+            t.error(error)
+            source.write([{ _id: 'foo', bar: 1, _rev: rev }], (error, [{ rev }]) => {
+              t.error(error)
+              pull(
+                replicate(source, target),
+                pull.collect((error, docs) => {
+                  t.error(error)
+                  target.read((error, [doc]) => {
+                    t.error(error)
+                    t.equal(doc._rev, rev, 'correct rev present on target')
+                    t.end()
+                  })
                 })
+              )
             })
-        })
+          })
+        )
+      })
     })
 
     g.end()
