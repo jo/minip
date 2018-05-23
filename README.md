@@ -40,7 +40,8 @@ pull(
 The CouchDB replication protocol replicates documents via the changes feed. This replication, though, is based on `allDocs` by now.
 
 ## Dependencies
-Mini P requires Node v8.
+Mini P requires Node v8.  
+HttpP adapter only works with CouchDB 2 (relies on `_bulk_get`).  
 The only npm dependency is `request`, which is used for the HttpP adapter.
 
 ## Example
