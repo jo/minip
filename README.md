@@ -14,11 +14,14 @@ Mini P provides two adapters by now:
 both share the same interface.
 
 ## API
-The API is just two methods
+The API is just two methods:
 
 * `read(options)`
 * `write(docs, options)`
 
+(and a `reset` used for testing)
+
+### Options
 * For `read` you pass `{ revs: true }` and get `_revisions` included in the documents
 * For `write` you can pass `{ new_edits: false }` to circumvent optimistic locking
 
@@ -37,7 +40,8 @@ pull(
 )
 ```
 
-The CouchDB replication protocol replicates documents via the changes feed. This replication, though, is based on `allDocs` by now.
+The CouchDB replication protocol replicates documents via the changes feed.
+This replication, though, is based on `allDocs` by now.
 
 ## Dependencies
 Mini P requires Node v8.  
