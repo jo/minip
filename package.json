@@ -1,7 +1,7 @@
 {
   "name": "minip",
   "version": "0.0.0-development",
-  "description": "Mini P is the very basics you need to replicate with a CouchDB.",
+  "description": "Mini P is a simple database that can replicate with CouchDB.",
   "main": "index.js",
   "scripts": {
     "test": "tap --reporter=spec test/*.js test/memory-p/*.js",

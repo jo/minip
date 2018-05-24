@@ -1,7 +1,9 @@
 # Mini P
-Mini P (Berlin slang for mini pizza) is the very basics you needed to replicate
-with a CouchDB. Its not something you would consider using in production in any
-way.
+Mini P (Berlin slang for mini pizza) is a simple database that can replicate
+with CouchDB.
+
+_This is an experimental project. If you're looking for something to use in
+production, consider [PouchDB](https://pouchdb.com/)._
 
 [![Build Status](https://travis-ci.org/jo/minip.svg?branch=master)](https://travis-ci.org/jo/minip)
 
